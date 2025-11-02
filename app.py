@@ -2,9 +2,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import mysql.connector
 from config import Config
 import datetime
-import pandas as pd
-from io import BytesIO
 from flask import send_file
+import os
+import psycopg2
+from urllib.parse import urlparse
+
 
 # Create Flask application
 app = Flask(__name__)
@@ -12,19 +14,32 @@ app.config.from_object(Config)
 
 # Database connection function
 def get_db_connection():
-    """
-    Establishes connection to MySQL database using XAMPP default settings
-    """
+    """PostgreSQL database connection for Render"""
     try:
-        conn = mysql.connector.connect(
-            host=app.config['MYSQL_HOST'],
-            user=app.config['MYSQL_USER'],
-            password=app.config['MYSQL_PASSWORD'],
-            database=app.config['MYSQL_DB'],
-            port=app.config['MYSQL_PORT']
-        )
-        return conn
-    except mysql.connector.Error as e:
+        # Render provides DATABASE_URL environment variable
+        database_url = os.environ.get('DATABASE_URL')
+        
+        if database_url:
+            # Parse the database URL
+            result = urlparse(database_url)
+            conn = psycopg2.connect(
+                database=result.path[1:],
+                user=result.username,
+                password=result.password,
+                host=result.hostname,
+                port=result.port
+            )
+            return conn
+        else:
+            # Fallback for local development
+            conn = psycopg2.connect(
+                host='localhost',
+                database='election_census',
+                user='your_username',
+                password='your_password'
+            )
+            return conn
+    except Exception as e:
         print(f"Database connection error: {e}")
         return None
 
