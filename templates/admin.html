@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Header Section -->
+    <div class="admin-header">
+        <div class="header-content">
+            <h1>📊 Census Administration Dashboard</h1>
+            <p class="subtitle">Class Representative Election 2025 - Real-time Monitoring</p>
+        </div>
+        <div class="admin-actions">
+            <div class="action-buttons">
+                <a href="{{ url_for('export_data') }}" class="btn-export" title="Download all census data">
+                    <span class="btn-icon">📥</span>
+                    <span class="btn-text">Export All Data</span>
+                </a>
+                <a href="{{ url_for('admin_logout') }}" class="btn-logout" title="Logout from admin panel">
+                    <span class="btn-icon">🚪</span>
+                    <span class="btn-text">Logout</span>
+                </a>
+            </div>
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span class="last-updated">Live • Auto-refreshing</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Overview -->
+    <div class="stats-overview">
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <h3>Total Registered</h3>
+                    <div class="stat-number">{{ stats.total }}</div>
+                    <div class="stat-trend">Voters Count</div>
+                </div>
+            </div>
+            
+            <div class="stat-card success">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                    <h3>Today's Growth</h3>
+                    <div class="stat-number">{{ stats.recent }}</div>
+                    <div class="stat-trend">Last 24 Hours</div>
+                </div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <h3>Census Progress</h3>
+                    <div class="stat-number">
+                        {% if stats.total > 0 %}
+                            {{ ((stats.total / class_size) * 100)|round(1) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="stat-trend">of {{ class_size }} target</div>
+                </div>
+            </div>
+
+            <div class="stat-card info">
+                <div class="stat-icon">📅</div>
+                <div class="stat-content">
+                    <h3>Active Period</h3>
+                    <div class="stat-number">{{ stats.daily_trend|length }}</div>
+                    <div class="stat-trend">Active days</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-grid">
+        <!-- Left Column -->
+        <div class="dashboard-column">
+            <!-- Recent Registrations -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>🆕 Recent Registrations</h3>
+                    <div class="card-actions">
+                        <span class="badge">{{ recent_voters|length }} new</span>
+                        <a href="{{ url_for('export_recent') }}" class="btn-export-small" title="Download recent registrations">
+                            <span class="btn-icon">📥</span>
+                            Export
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_voters %}
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Program</th>
+                                    <th>Location</th>
+                                    <th>Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for voter in recent_voters %}
+                                <tr class="clickable-row" onclick="toggleRowDetails(this)">
+                                    <td>
+                                        <div class="sin-display">
+                                            <code>{{ voter.sin }}</code>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="program-tag {{ 'cs' if voter.program == 'Computer Science' else 'ce' }}">
+                                            {{ voter.program }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="province-badge">{{ voter.province }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="timestamp">
+                                            <div class="date">{{ voter.registration_date.strftime('%b %d') }}</div>
+                                            <div class="time">{{ voter.registration_date.strftime('%H:%M') }}</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="detail-row">
+                                    <td colspan="4">
+                                        <div class="contact-details">
+                                            <div class="contact-item">
+                                                <span class="contact-icon">📧</span>
+                                                <span class="contact-value">{{ voter.email }}</span>
+                                            </div>
+                                            <div class="contact-item">
+                                                <span class="contact-icon">📞</span>
+                                                <span class="contact-value">{{ voter.phone_number }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h4>No Recent Registrations</h4>
+                        <p>No new registrations in the last 24 hours</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Program Distribution -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>🎓 Program Distribution</h3>
+                </div>
+                <div class="card-body">
+                    <div class="distribution-chart">
+                        {% for program in stats.by_program %}
+                        <div class="distribution-item">
+                            <div class="distribution-header">
+                                <span class="distribution-label">{{ program.program }}</span>
+                                <span class="distribution-count">{{ program.count }} ({{ ((program.count / stats.total * 100) if stats.total > 0 else 0)|round(1) }}%)</span>
+                            </div>
+                            <div class="distribution-bar">
+                                <div class="distribution-fill {{ 'cs-fill' if program.program == 'Computer Science' else 'ce-fill' }}" 
+                                     style="width: {{ (program.count / stats.total * 100) if stats.total > 0 else 0 }}%">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="dashboard-column">
+            <!-- Provincial Distribution -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>🗺️ Provincial Distribution</h3>
+                </div>
+                <div class="card-body">
+                    <div class="province-grid">
+                        {% for province in stats.by_province %}
+                        <div class="province-item">
+                            <div class="province-name">{{ province.province.replace(' Province', '') }}</div>
+                            <div class="province-stats">
+                                <div class="province-count">{{ province.count }}</div>
+                                <div class="province-bar">
+                                    <div class="province-fill" style="width: {{ (province.count / stats.total * 100) if stats.total > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registration Trend -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>📈 Registration Trend</h3>
+                    <span class="badge">7 days</span>
+                </div>
+                <div class="card-body">
+                    {% if stats.daily_trend %}
+                    <div class="trend-chart">
+                        {% for day in stats.daily_trend %}
+                        <div class="trend-day">
+                            <div class="trend-date">{{ day.date.strftime('%a') }}<br><small>{{ day.date.strftime('%d') }}</small></div>
+                            <div class="trend-bar-container">
+                                <div class="trend-bar" style="height: {{ (day.count / max_daily_count * 80) if max_daily_count > 0 else 0 }}%">
+                                    <div class="trend-value">{{ day.count }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <p>No registration data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status Footer -->
+    <div class="system-status">
+        <div class="status-item">
+            <span class="status-label">Last Updated</span>
+            <span class="status-value">{{ current_time.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Next Refresh</span>
+            <span class="status-value">in <span id="countdown">30</span>s</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">System Status</span>
+            <span class="status-badge success">Operational</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Data Integrity</span>
+            <span class="status-badge success">Verified</span>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh with countdown
+let countdown = 30;
+const countdownElement = document.getElementById('countdown');
+
+function updateCountdown() {
+    countdown--;
+    countdownElement.textContent = countdown;
+    
+    if (countdown <= 0) {
+        window.location.reload();
+    }
+}
+
+setInterval(updateCountdown, 1000);
+
+// Toggle row details
+function toggleRowDetails(row) {
+    const detailRow = row.nextElementSibling;
+    detailRow.classList.toggle('expanded');
+    row.classList.toggle('expanded');
+}
+
+// Real-time data updates
+function updateLiveStats() {
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            // Update total count with animation
+            const totalElement = document.querySelector('.stat-card.primary .stat-number');
+            if (totalElement && data.total) {
+                const currentTotal = parseInt(totalElement.textContent);
+                if (currentTotal !== data.total) {
+                    totalElement.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        totalElement.textContent = data.total;
+                        totalElement.style.transform = 'scale(1)';
+                    }, 300);
+                }
+            }
+        })
+        .catch(error => console.error('Error updating stats:', error));
+}
+
+// Update every 15 seconds for live feel
+setInterval(updateLiveStats, 15000);
+
+// Mobile menu toggle
+function setupMobileMenu() {
+    const header = document.querySelector('.admin-header');
+    if (window.innerWidth < 768) {
+        header.classList.add('mobile-view');
+    } else {
+        header.classList.remove('mobile-view');
+    }
+}
+
+window.addEventListener('resize', setupMobileMenu);
+setupMobileMenu();
+</script>
+{% endblock %}

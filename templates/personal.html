@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <div class="progress-bar">
+        <div class="progress-step active">1</div>
+        <div class="progress-step">2</div>
+        <div class="progress-step">3</div>
+    </div>
+    
+    <h2>Personal Details</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="surname">Surname:</label>
+            <input type="text" id="surname" name="surname" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="sin">Student Identification Number (SIN):</label>
+            <input type="text" id="sin" name="sin" required>
+        </div>
+        
+        <button type="submit" class="btn-next">Next: Academic Details →</button>
+    </form>
+</div>
+{% endblock %}

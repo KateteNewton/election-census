@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>🔐 Admin Login</h2>
+            <p>Election Census System</p>
+        </div>
+        
+        <form method="POST" class="login-form">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="Enter admin username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Enter admin password">
+            </div>
+            
+            <button type="submit" class="btn-login">Login to Dashboard</button>
+        </form>
+        
+        <div class="login-info">
+            <h4>⚠️ Important Security Notes:</h4>
+            <ul>
+                <li>Default credentials are in config.py</li>
+                <li>Change passwords before production use</li>
+                <li>Admin access is logged and monitored</li>
+            </ul>
+        </div>
+        
+        <div class="login-footer">
+            <a href="{{ url_for('index') }}">← Back to Census Form</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <div class="progress-bar">
+        <div class="progress-step completed">1</div>
+        <div class="progress-step active">2</div>
+        <div class="progress-step">3</div>
+    </div>
+    
+    <h2>Academic Details</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="program">Program of Study:</label>
+            <select id="program" name="program" required>
+                <option value="">Select your program</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Computer Engineering">Computer Engineering</option>
+            </select>
+        </div>
+        
+        <div class="form-buttons">
+            <a href="{{ url_for('personal_details') }}" class="btn-back">← Back</a>
+            <button type="submit" class="btn-next">Next: Contact Details →</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
